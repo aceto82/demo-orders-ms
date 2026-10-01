@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: inventory-service
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  datasource:
+    url: jdbc:postgresql://localhost:5431/ms_inventory
+    username: aceto82
+    password: 12345678
+server:
+  port: 8083
