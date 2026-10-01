@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: orders-service
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MysqlSQLDialect
+  datasource:
+    url: jdbc:mysql://localhost:3306/ms_orders
+    username: aceto82
+    password: 12345678
+server:
+  port: 8082
