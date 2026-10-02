@@ -1,6 +1,7 @@
 package com.ortiz.orders_services.config;
 
 import io.netty.channel.ChannelOption;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -16,6 +17,7 @@ public class WebClientConfig {
     private static final Duration RESPONSE_TIMEOUT = Duration.ofSeconds(10);
 
     @Bean
+    @LoadBalanced
     public WebClient.Builder webClient() {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) CONNECT_TIMEOUT.toMillis())

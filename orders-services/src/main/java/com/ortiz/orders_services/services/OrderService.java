@@ -24,7 +24,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OrderService {
 
-    private static final String INVENTORY_RESERVE_URL = "http://localhost:8080/api/inventory/reserve";
+    private static final String INVENTORY_RESERVE_URL = "lb://inventory-service/api/inventory/reserve";
 
     private final OrderRepository orderRepository;
     private final WebClient.Builder webClientBuilder;
