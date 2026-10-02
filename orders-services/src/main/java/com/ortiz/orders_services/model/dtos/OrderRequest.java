@@ -1,5 +1,7 @@
 package com.ortiz.orders_services.model.dtos;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,5 +13,6 @@ import java.util.List;
 @NoArgsConstructor
 public class OrderRequest {
 
-    private List<OrderItemRequest> orderItems;
+    @NotEmpty
+    private List<@Valid OrderItemRequest> orderItems;
 }

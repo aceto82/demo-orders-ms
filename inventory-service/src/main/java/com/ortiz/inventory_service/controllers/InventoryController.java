@@ -3,8 +3,8 @@ package com.ortiz.inventory_service.controllers;
 import com.ortiz.inventory_service.model.dtos.BaseResponse;
 import com.ortiz.inventory_service.model.dtos.OrderItemRequest;
 import com.ortiz.inventory_service.services.InventoryService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,14 +17,17 @@ public class InventoryController {
     private final InventoryService inventoryService;
 
     @GetMapping("/{sku}")
-    @ResponseStatus(HttpStatus.OK)
     public boolean isInStock(@PathVariable String sku) {
         return inventoryService.isInStock(sku);
     }
 
     @PostMapping("/in-stock")
-    @ResponseStatus(HttpStatus.OK)
-    public BaseResponse areInStock(@RequestBody List<OrderItemRequest> orderItemRequests) {
+    public BaseResponse areInStock(@Valid @RequestBody List<OrderItemRequest> orderItemRequests) {
         return inventoryService.areInStock(orderItemRequests);
+    }
+
+    @PostMapping("/reserve")
+    public BaseResponse reserveStock(@Valid @RequestBody List<OrderItemRequest> orderItemRequests) {
+        return inventoryService.reserveStock(orderItemRequests);
     }
 }

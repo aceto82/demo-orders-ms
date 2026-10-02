@@ -1,13 +1,22 @@
 package com.ortiz.orders_services.services;
 
-import com.ortiz.orders_services.model.dtos.*;
+import com.ortiz.orders_services.exceptions.InsufficientStockException;
+import com.ortiz.orders_services.exceptions.InventoryServiceException;
+import com.ortiz.orders_services.model.dtos.BaseResponse;
+import com.ortiz.orders_services.model.dtos.OrderItemRequest;
+import com.ortiz.orders_services.model.dtos.OrderItemResponse;
+import com.ortiz.orders_services.model.dtos.OrderRequest;
+import com.ortiz.orders_services.model.dtos.OrderResponse;
 import com.ortiz.orders_services.model.entities.Order;
 import com.ortiz.orders_services.model.entities.OrderItems;
 import com.ortiz.orders_services.repositories.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,35 +24,54 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OrderService {
 
+    private static final String INVENTORY_RESERVE_URL = "http://localhost:8083/api/inventory/reserve";
+
     private final OrderRepository orderRepository;
     private final WebClient.Builder webClientBuilder;
 
     public void placeOrder(OrderRequest orderRequest){
-        // check for inventory
-        BaseResponse result = this.webClientBuilder.build()
-                .post()
-                .uri("http://localhost:8083/api/inventory/in-stock")
-                .bodyValue(orderRequest.getOrderItems())
-                .retrieve()
-                .bodyToMono(BaseResponse.class)
-                .block();
+        // Inventory verifies availability and consumes the stock atomically in a single call, so a
+        // retry cannot place the same order twice against stock that was never consumed.
+        BaseResponse result = reserveStock(orderRequest.getOrderItems());
 
-        if(result == null || result.hasErrors()){
-            throw new IllegalArgumentException("Invalid order request");
+        if (result.hasErrors()) {
+            throw new InsufficientStockException(result.errorMessages());
         }
 
         Order order = new Order();
         order.setOrderNumber(UUID.randomUUID().toString());
-        order.setOrderItems(orderRequest.getOrderItems().stream()
-                .map(orderItemRequest -> mapToOrderItems(orderItemRequest,order))
-                .toList()
+        order.setOrderItems(new ArrayList<>(orderRequest.getOrderItems().stream()
+                .map(orderItemRequest -> mapToOrderItems(orderItemRequest, order))
+                .toList())
         );
         this.orderRepository.save(order);
     }
 
+    private BaseResponse reserveStock(List<OrderItemRequest> orderItems) {
+        return this.webClientBuilder.build()
+                .post()
+                .uri(INVENTORY_RESERVE_URL)
+                .bodyValue(orderItems)
+                .exchangeToMono(response -> {
+                    if (response.statusCode().is2xxSuccessful()) {
+                        return response.bodyToMono(BaseResponse.class)
+                                .switchIfEmpty(Mono.error(new InventoryServiceException(
+                                        "Inventory service returned an empty reservation response")));
+                    }
+                    if (response.statusCode().is4xxClientError()) {
+                        return response.bodyToMono(BaseResponse.class)
+                                .defaultIfEmpty(new BaseResponse(new String[]{"Inventory service rejected the order"}));
+                    }
+                    return Mono.error(new InventoryServiceException(
+                            "Inventory service unavailable, status: " + response.statusCode().value()));
+                })
+                .onErrorMap(WebClientRequestException.class,
+                        cause -> new InventoryServiceException("Inventory service unreachable: " + cause.getMessage()))
+                .block();
+    }
+
     private OrderItems mapToOrderItems(OrderItemRequest orderItemRequest, Order order){
         return OrderItems.builder()
-                .id(orderItemRequest.getId())
                 .sku(orderItemRequest.getSku())
                 .price(orderItemRequest.getPrice())
                 .quantity(orderItemRequest.getQuantity())
