@@ -1,8 +1,6 @@
 package com.ortiz.orders_services.services;
 
-import com.ortiz.orders_services.model.dtos.BaseResponse;
-import com.ortiz.orders_services.model.dtos.OrderItemRequest;
-import com.ortiz.orders_services.model.dtos.OrderRequest;
+import com.ortiz.orders_services.model.dtos.*;
 import com.ortiz.orders_services.model.entities.Order;
 import com.ortiz.orders_services.model.entities.OrderItems;
 import com.ortiz.orders_services.repositories.OrderRepository;
@@ -10,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -23,13 +22,13 @@ public class OrderService {
         // check for inventory
         BaseResponse result = this.webClientBuilder.build()
                 .post()
-                .uri("http://localhost:8083/api/inventory/in_stock")
+                .uri("http://localhost:8083/api/inventory/in-stock")
                 .bodyValue(orderRequest.getOrderItems())
                 .retrieve()
                 .bodyToMono(BaseResponse.class)
                 .block();
 
-        if(result == null || !result.hasErrors()){
+        if(result == null || result.hasErrors()){
             throw new IllegalArgumentException("Invalid order request");
         }
 
@@ -50,6 +49,23 @@ public class OrderService {
                 .quantity(orderItemRequest.getQuantity())
                 .order(order)
                 .build();
+    }
+
+    public List<OrderResponse> getOrders(){
+        List<Order> orders = this.orderRepository.findAll();
+        return orders.stream().map(this::mapToOrderResponse).toList();
+    }
+
+    private OrderResponse mapToOrderResponse(Order order){
+        return new OrderResponse(order.getId(), order.getOrderNumber(),
+                order.getOrderItems().stream().map(
+                        this::mapToOrderItemResponse
+                ).toList()
+        );
+    }
+
+    private OrderItemResponse mapToOrderItemResponse(OrderItems orderItems) {
+        return new OrderItemResponse(orderItems.getId(), orderItems.getSku(), orderItems.getPrice(), orderItems.getQuantity());
     }
 
 }
