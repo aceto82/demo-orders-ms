@@ -17,7 +17,7 @@ public class OrderItems {
 
     private String sku;
     private Double price;
-    private Double quantity;
+    private Long quantity;
 
     @ManyToOne
     @JoinColumn(name = "order_id")

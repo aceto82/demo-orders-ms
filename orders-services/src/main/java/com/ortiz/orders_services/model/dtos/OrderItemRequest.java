@@ -12,5 +12,5 @@ public class OrderItemRequest {
     private Long id;
     private String sku;
     private Double price;
-    private Double quantity;
+    private Long quantity;
 }
