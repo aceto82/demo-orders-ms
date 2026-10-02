@@ -100,7 +100,7 @@ class OrderServiceTests {
                 .exchangeFunction(request -> Mono.error(new WebClientRequestException(
                         new java.net.ConnectException("Connection refused"),
                         HttpMethod.POST,
-                        URI.create("http://localhost:8083/api/inventory/reserve"),
+                        URI.create("http://localhost:8080/api/inventory/reserve"),
                         HttpHeaders.EMPTY)))
                 .build()
                 .mutate());
