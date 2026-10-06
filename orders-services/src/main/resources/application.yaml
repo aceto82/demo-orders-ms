@@ -8,6 +8,11 @@ spring:
     url: jdbc:mysql://localhost:3306/ms_orders
     username: aceto82
     password: 12345678
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8181/realms/demo-orders-serv-realm/protocol/openid-connect/certs
 server:
   port: 0
 eureka:
