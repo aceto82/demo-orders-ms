@@ -1,6 +1,10 @@
 spring:
   application:
     name: discovery-server
+  security:
+    user:
+      name: eureka
+      password: password
 server:
   port: 8761
 eureka:
@@ -12,3 +16,9 @@ eureka:
     fetch-registry: false
     service-url:
       defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+logging:
+  level:
+    org:
+      springframework:
+        web: debug
+        security: debug
