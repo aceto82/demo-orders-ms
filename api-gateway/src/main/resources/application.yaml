@@ -1,34 +1,74 @@
 spring:
   application:
     name: api-gateway
+
   cloud:
     gateway:
       server:
-        webmvc:
+        webflux:
           routes:
             - id: inventory-service
               uri: lb://inventory-service
               predicates:
                 - Path=/api/inventory/**
+              filters:
+                - TokenRelay
             - id: orders-service
               uri: lb://orders-service
               predicates:
                 - Path=/api/order/**
+              filters:
+                - TokenRelay
             - id: products-service
               uri: lb://products-service
               predicates:
                 - Path=/api/product/**
+              filters:
+                - TokenRelay
+            - id: discovery-service
+              uri: http://localhost:8761
+              predicates:
+                - Path=/eureka/web
+              filters:
+                - SetPath=/
+            - id: discovery-service-static
+              uri: http://localhost:8761
+              predicates:
+                - Path=/eureka/**
+
+  # Keycloak
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8181/realms/demo-orders-serv-realm/protocol/openid-connect/certs
+      client:
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8181/realms/demo-orders-serv-realm
+        registration:
+          keycloak:
+            provider: keycloak
+            scope:
+              - openid
+            client-id: demo_orders_serv_client
+            client-secret: KjsSWknhdPF10Aol6SgxNcVuxJI6uLY3bqQfgKZyS9XGfQcjwl2izpbVI9RwcnvqVKvFCoyCSYe5PO9S3NyC3b
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/keycloak"
+
+
 server:
   port: 8080
+
 eureka:
   client:
     service-url:
       default-zone: http://eureka:password@localhost:8761/eureka
   instance:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
 logging:
   level:
-    root: INFO
-    org.springframework.cloud.gateway: DEBUG
-    org.springframework.cloud.gateway.route.RouteDefinitionRouteLocator: INFO
-
+    root: info
+    org.springframework.cloud.gateway: trace
+#    org.springframework.cloud.gateway.route.RouteDefinitionRouteLocator: info
