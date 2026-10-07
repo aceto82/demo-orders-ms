@@ -1,5 +1,6 @@
 package com.ortiz.orders_services.services;
 
+import com.ortiz.orders_services.events.OrderEvent;
 import com.ortiz.orders_services.exceptions.InsufficientStockException;
 import com.ortiz.orders_services.exceptions.InventoryServiceException;
 import com.ortiz.orders_services.model.dtos.BaseResponse;
@@ -9,8 +10,11 @@ import com.ortiz.orders_services.model.dtos.OrderRequest;
 import com.ortiz.orders_services.model.dtos.OrderResponse;
 import com.ortiz.orders_services.model.entities.Order;
 import com.ortiz.orders_services.model.entities.OrderItems;
+import com.ortiz.orders_services.model.enums.OrderStatus;
 import com.ortiz.orders_services.repositories.OrderRepository;
+import com.ortiz.orders_services.utils.JsonUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
@@ -25,9 +29,11 @@ import java.util.UUID;
 public class OrderService {
 
     private static final String INVENTORY_RESERVE_URL = "lb://inventory-service/api/inventory/reserve";
+    private static final String ORDERS_TOPIC = "orders-topic";
 
     private final OrderRepository orderRepository;
     private final WebClient.Builder webClientBuilder;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
     public OrderResponse placeOrder(OrderRequest orderRequest){
         // Inventory verifies availability and consumes the stock atomically in a single call, so a
@@ -45,6 +51,11 @@ public class OrderService {
                 .toList())
         );
         var savedOrder = this.orderRepository.save(order);
+
+        this.kafkaTemplate.send(ORDERS_TOPIC, JsonUtils.toJson(
+                new OrderEvent(savedOrder.getOrderNumber(), savedOrder.getOrderItems().size(), OrderStatus.PLACED)
+        ));
+
         return mapToOrderResponse(savedOrder);
     }
 

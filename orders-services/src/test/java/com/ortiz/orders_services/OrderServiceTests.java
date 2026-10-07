@@ -13,6 +13,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
@@ -32,6 +33,7 @@ import static org.mockito.Mockito.when;
 class OrderServiceTests {
 
     private final OrderRepository orderRepository = mock(OrderRepository.class);
+    private final KafkaTemplate<String, String> kafkaTemplate = mock(KafkaTemplate.class);
 
     @Test
     @DisplayName("a placed order gets server-generated ids, never a client-supplied one")
@@ -87,7 +89,7 @@ class OrderServiceTests {
         OrderService orderService = new OrderService(orderRepository, WebClient.builder()
                 .exchangeFunction(request -> Mono.just(ClientResponse.create(HttpStatus.OK).build()))
                 .build()
-                .mutate());
+                .mutate(), kafkaTemplate);
 
         assertThatThrownBy(() -> orderService.placeOrder(
                 new OrderRequest(List.of(new OrderItemRequest("000001", 9.99, 2L)))))
@@ -106,7 +108,7 @@ class OrderServiceTests {
                         URI.create("http://localhost:8080/api/inventory/reserve"),
                         HttpHeaders.EMPTY)))
                 .build()
-                .mutate());
+                .mutate(), kafkaTemplate);
 
         assertThatThrownBy(() -> orderService.placeOrder(
                 new OrderRequest(List.of(new OrderItemRequest("000001", 9.99, 2L)))))
@@ -125,6 +127,6 @@ class OrderServiceTests {
                 .exchangeFunction(request -> Mono.just(response))
                 .build()
                 .mutate();
-        return new OrderService(orderRepository, builder);
+        return new OrderService(orderRepository, builder, kafkaTemplate);
     }
 }

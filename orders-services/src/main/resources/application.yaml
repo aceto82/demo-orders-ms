@@ -8,19 +8,28 @@ spring:
     url: jdbc:mysql://localhost:3306/ms_orders
     username: aceto82
     password: 12345678
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      retries: 1
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
   security:
     oauth2:
       resourceserver:
         jwt:
           jwk-set-uri: http://localhost:8181/realms/demo-orders-serv-realm/protocol/openid-connect/certs
+
 server:
   port: 0
+
 eureka:
   client:
     service-url:
       default-zone: http://eureka:password@localhost:8761/eureka
   instance:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
 management:
   endpoints:
     web:
