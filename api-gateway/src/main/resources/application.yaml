@@ -35,6 +35,24 @@ spring:
               uri: http://localhost:8761
               predicates:
                 - Path=/eureka/**
+            - id: inventory-service-actuator
+              uri: lb://inventory-service/actuator/inventory/**
+              predicates:
+                - Path=/actuator/inventory/**
+              filters:
+                - TokenRelay
+            - id: orders-service-actuator
+              uri: lb://orders-service/actuator/orders/**
+              predicates:
+                - Path=/actuator/orders/**
+              filters:
+                - TokenRelay
+            - id: products-service-actuator
+              uri: lb://products-service/actuator/products/**
+              predicates:
+                - Path=/actuator/products/**
+              filters:
+                - TokenRelay
 
   # Keycloak
   security:
@@ -72,3 +90,11 @@ logging:
     root: info
     org.springframework.cloud.gateway: trace
 #    org.springframework.cloud.gateway.route.RouteDefinitionRouteLocator: info
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+      base-path: /actuator
