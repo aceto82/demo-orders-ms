@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class OrderServiceTests {
 
@@ -35,6 +36,8 @@ class OrderServiceTests {
     @Test
     @DisplayName("a placed order gets server-generated ids, never a client-supplied one")
     void placeOrderDoesNotCopyClientSuppliedIds() {
+        when(orderRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
         orderServiceRespondingWith(HttpStatus.OK, "{\"errorMessages\":null}")
                 .placeOrder(new OrderRequest(List.of(new OrderItemRequest("000001", 9.99, 2L))));
 

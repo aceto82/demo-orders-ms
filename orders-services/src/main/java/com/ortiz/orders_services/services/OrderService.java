@@ -29,7 +29,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final WebClient.Builder webClientBuilder;
 
-    public void placeOrder(OrderRequest orderRequest){
+    public OrderResponse placeOrder(OrderRequest orderRequest){
         // Inventory verifies availability and consumes the stock atomically in a single call, so a
         // retry cannot place the same order twice against stock that was never consumed.
         BaseResponse result = reserveStock(orderRequest.getOrderItems());
@@ -44,7 +44,8 @@ public class OrderService {
                 .map(orderItemRequest -> mapToOrderItems(orderItemRequest, order))
                 .toList())
         );
-        this.orderRepository.save(order);
+        var savedOrder = this.orderRepository.save(order);
+        return mapToOrderResponse(savedOrder);
     }
 
     private BaseResponse reserveStock(List<OrderItemRequest> orderItems) {
