@@ -27,6 +27,8 @@ management:
       exposure:
         include:
           - health
+          - circuitbreakers
+          - circuitbreakerevents
       base-path: /actuator/orders
   endpoint:
     health:
@@ -38,7 +40,7 @@ resilience4j:
   circuitbreaker:
     instances:
       orders-service:
-        register-health-indicator: true
+        registerHealthIndicator: true
         sliding-window-size: 5
         sliding-window-type: count_based
         failure-rate-threshold: 50
