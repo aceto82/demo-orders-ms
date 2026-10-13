@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Grafana runtime data ###
+files/grafana/*
+!files/grafana/.gitkeep

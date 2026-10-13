@@ -125,3 +125,18 @@ services:
     network_mode: host
     volumes:
       - ./files/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  ### Grafana
+  grafana:
+    container_name: grafana
+    image: grafana/grafana-oss:13.0.2
+    restart: unless-stopped
+    network_mode: host
+    user: "1000:1000"
+    volumes:
+      - ./files/grafana:/var/lib/grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SECURITY_ADMIN_USER: admin
+    depends_on:
+      - prometheus
