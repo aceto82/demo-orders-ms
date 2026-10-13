@@ -32,3 +32,6 @@ scrape_configs:
       - targets: [ 'localhost:8080' ]
         labels:
           application: 'API Gateway'
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: [ 'localhost:9090' ]
