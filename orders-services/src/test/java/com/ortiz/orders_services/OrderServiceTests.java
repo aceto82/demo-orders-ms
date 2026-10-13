@@ -7,6 +7,7 @@ import com.ortiz.orders_services.model.dtos.OrderRequest;
 import com.ortiz.orders_services.model.entities.Order;
 import com.ortiz.orders_services.repositories.OrderRepository;
 import com.ortiz.orders_services.services.OrderService;
+import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -34,6 +35,7 @@ class OrderServiceTests {
 
     private final OrderRepository orderRepository = mock(OrderRepository.class);
     private final KafkaTemplate<String, String> kafkaTemplate = mock(KafkaTemplate.class);
+    private final ObservationRegistry observationRegistry = ObservationRegistry.create();
 
     @Test
     @DisplayName("a placed order gets server-generated ids, never a client-supplied one")
@@ -89,7 +91,7 @@ class OrderServiceTests {
         OrderService orderService = new OrderService(orderRepository, WebClient.builder()
                 .exchangeFunction(request -> Mono.just(ClientResponse.create(HttpStatus.OK).build()))
                 .build()
-                .mutate(), kafkaTemplate);
+                .mutate(), kafkaTemplate, observationRegistry);
 
         assertThatThrownBy(() -> orderService.placeOrder(
                 new OrderRequest(List.of(new OrderItemRequest("000001", 9.99, 2L)))))
@@ -108,7 +110,7 @@ class OrderServiceTests {
                         URI.create("http://localhost:8080/api/inventory/reserve"),
                         HttpHeaders.EMPTY)))
                 .build()
-                .mutate(), kafkaTemplate);
+                .mutate(), kafkaTemplate, observationRegistry);
 
         assertThatThrownBy(() -> orderService.placeOrder(
                 new OrderRequest(List.of(new OrderItemRequest("000001", 9.99, 2L)))))
@@ -127,6 +129,6 @@ class OrderServiceTests {
                 .exchangeFunction(request -> Mono.just(response))
                 .build()
                 .mutate();
-        return new OrderService(orderRepository, builder, kafkaTemplate);
+        return new OrderService(orderRepository, builder, kafkaTemplate, observationRegistry);
     }
 }
