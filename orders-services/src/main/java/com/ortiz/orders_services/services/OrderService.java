@@ -13,6 +13,8 @@ import com.ortiz.orders_services.model.entities.OrderItems;
 import com.ortiz.orders_services.model.enums.OrderStatus;
 import com.ortiz.orders_services.repositories.OrderRepository;
 import com.ortiz.orders_services.utils.JsonUtils;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -34,29 +36,37 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final WebClient.Builder webClientBuilder;
     private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObservationRegistry observationRegistry;
 
     public OrderResponse placeOrder(OrderRequest orderRequest){
+
+        Observation inventoryObservation = Observation.createNotStarted("inventory-service", this.observationRegistry);
+
         // Inventory verifies availability and consumes the stock atomically in a single call, so a
         // retry cannot place the same order twice against stock that was never consumed.
-        BaseResponse result = reserveStock(orderRequest.getOrderItems());
+        return inventoryObservation.observe(
+                () -> {
+                    BaseResponse result = reserveStock(orderRequest.getOrderItems());
 
-        if (result.hasErrors()) {
-            throw new InsufficientStockException(result.errorMessages());
-        }
+                    if (result.hasErrors()) {
+                        throw new InsufficientStockException(result.errorMessages());
+                    }
 
-        Order order = new Order();
-        order.setOrderNumber(UUID.randomUUID().toString());
-        order.setOrderItems(new ArrayList<>(orderRequest.getOrderItems().stream()
-                .map(orderItemRequest -> mapToOrderItems(orderItemRequest, order))
-                .toList())
+                    Order order = new Order();
+                    order.setOrderNumber(UUID.randomUUID().toString());
+                    order.setOrderItems(new ArrayList<>(orderRequest.getOrderItems().stream()
+                            .map(orderItemRequest -> mapToOrderItems(orderItemRequest, order))
+                            .toList())
+                    );
+                    var savedOrder = this.orderRepository.save(order);
+
+                    this.kafkaTemplate.send(ORDERS_TOPIC, JsonUtils.toJson(
+                            new OrderEvent(savedOrder.getOrderNumber(), savedOrder.getOrderItems().size(), OrderStatus.PLACED)
+                    ));
+
+                    return mapToOrderResponse(savedOrder);
+                }
         );
-        var savedOrder = this.orderRepository.save(order);
-
-        this.kafkaTemplate.send(ORDERS_TOPIC, JsonUtils.toJson(
-                new OrderEvent(savedOrder.getOrderNumber(), savedOrder.getOrderItems().size(), OrderStatus.PLACED)
-        ));
-
-        return mapToOrderResponse(savedOrder);
     }
 
     private BaseResponse reserveStock(List<OrderItemRequest> orderItems) {
