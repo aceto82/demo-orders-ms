@@ -33,6 +33,7 @@ management:
       exposure:
         include:
           - health
+          - prometheus
       base-path: /actuator/inventory
 
   tracing:

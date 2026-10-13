@@ -13,8 +13,10 @@ public class SecurityConfig {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .authorizeExchange(authorizeExchangeSpec ->
-                        authorizeExchangeSpec.anyExchange().authenticated())
+                .authorizeExchange(authorizeExchangeSpec -> {
+                    authorizeExchangeSpec.pathMatchers("/actuator/**").permitAll();
+                    authorizeExchangeSpec.anyExchange().authenticated();
+                })
                 .oauth2Login(withDefaults())
                 .oauth2ResourceServer(resourceServer -> resourceServer.jwt(withDefaults()));
 

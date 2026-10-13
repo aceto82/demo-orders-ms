@@ -22,3 +22,12 @@ logging:
       springframework:
         web: debug
         security: debug
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - prometheus
+      base-path: /actuator/discovery

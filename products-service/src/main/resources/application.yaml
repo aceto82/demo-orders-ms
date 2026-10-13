@@ -30,6 +30,13 @@ logging:
   include-application-name: false
 
 management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - prometheus
+      base-path: /actuator/products
   tracing:
     sampling:
       probability: 1.0

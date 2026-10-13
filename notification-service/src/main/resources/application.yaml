@@ -25,4 +25,5 @@ management:
       exposure:
         include:
           - health
+          - prometheus
       base-path: /actuator/notifications

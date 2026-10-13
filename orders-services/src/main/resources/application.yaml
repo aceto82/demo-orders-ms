@@ -45,6 +45,7 @@ management:
           - health
           - circuitbreakers
           - circuitbreakerevents
+          - prometheus
       base-path: /actuator/orders
   endpoint:
     health:

@@ -26,8 +26,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .securityMatcher("/**")
-                .authorizeHttpRequests(authorizeRequests -> authorizeRequests.anyRequest().authenticated())
+                .authorizeHttpRequests(authorizeRequests ->
+                        authorizeRequests.requestMatchers( request ->
+                                        request.getRequestURI().contains("/actuator/orders")).permitAll()
+                                .anyRequest().authenticated())
                 .oauth2ResourceServer(configurer ->
                         configurer.jwt(
                                 jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter())
