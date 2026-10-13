@@ -87,10 +87,11 @@ eureka:
 
 logging:
   level:
-    root: info
+    root: debug
     org.springframework.cloud.gateway: trace
-#    org.springframework.cloud.gateway.route.RouteDefinitionRouteLocator: info
-
+  pattern:
+    correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "
+  include-application-name: false
 management:
   endpoints:
     web:
@@ -98,3 +99,10 @@ management:
         include:
           - health
       base-path: /actuator
+
+  tracing:
+    sampling:
+      probability: 1.0
+    export:
+      zipkin:
+        endpoint: http://localhost:9411/api/v2/spans
