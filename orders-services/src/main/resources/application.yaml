@@ -43,13 +43,12 @@ management:
       exposure:
         include:
           - health
-          - circuitbreakers
-          - circuitbreakerevents
           - prometheus
       base-path: /actuator/orders
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
+      roles: ADMIN
   health:
     circuitbreakers:
       enabled: true
