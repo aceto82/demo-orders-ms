@@ -103,6 +103,9 @@ El recorrido de una orden:
 
 ### Ejecutarlo localmente
 
+> 💡 ¿Preferís automatizarlo? El script `./dev.sh` (ver *Atajo con `dev.sh`* más abajo)
+> hace los pasos 3, 5 y 6 con un solo comando.
+
 **1. Clonar el repositorio**
 
 ```bash
@@ -181,6 +184,30 @@ mvn -pl api-gateway        spring-boot:run
 
 Abrí <http://localhost:8080> en el navegador. El *gateway* te va a pedir iniciar
 sesión con Keycloak.
+
+### Atajo con `dev.sh`
+
+Todos los pasos anteriores se pueden manejar con el script `dev.sh` de la raíz del
+repositorio:
+
+```bash
+./dev.sh up                              # atajo: infra + todos los servicios
+./dev.sh infra start                     # solo Docker Compose
+./dev.sh infra stop
+./dev.sh services start                  # todos (discovery primero, gateway último)
+./dev.sh services start orders-services  # uno solo
+./dev.sh services stop api-gateway
+./dev.sh services status
+./dev.sh logs orders-services            # sigue el log de un servicio
+./dev.sh test                            # todos los tests
+./dev.sh test orders-services            # tests de un módulo
+./dev.sh status                          # resumen de infra + servicios
+./dev.sh help                            # ayuda
+```
+
+Cada servicio arranca **en segundo plano** y escribe su salida en `logs/<servicio>.log`
+(su PID queda en `.run/`); ambos directorios están en `.gitignore`. Necesita
+`docker compose` y `mvn` (o los `./mvnw` de cada módulo) y usa el `.env` del paso 2.
 
 ### Probarlo
 
@@ -354,6 +381,9 @@ The life of an order:
 
 ### Run it locally
 
+> 💡 Prefer to automate it? The `./dev.sh` script (see *Shortcut with `dev.sh`* below)
+> does steps 3, 5 and 6 with a single command.
+
 **1. Clone the repository**
 
 ```bash
@@ -432,6 +462,30 @@ mvn -pl api-gateway        spring-boot:run
 
 Go to <http://localhost:8080> in your browser. The gateway will ask you to log in with
 Keycloak.
+
+### Shortcut with `dev.sh`
+
+Every step above can be driven by the `dev.sh` script at the repository root:
+
+```bash
+./dev.sh up                              # shortcut: infra + all services
+./dev.sh infra start                     # Docker Compose only
+./dev.sh infra stop
+./dev.sh services start                  # all (discovery first, gateway last)
+./dev.sh services start orders-services  # just one
+./dev.sh services stop api-gateway
+./dev.sh services status
+./dev.sh logs orders-services            # follow one service's log
+./dev.sh test                            # all tests
+./dev.sh test orders-services            # one module's tests
+./dev.sh status                          # infra + services summary
+./dev.sh help                            # help
+```
+
+Each service runs **in the background** and writes its output to
+`logs/<service>.log` (its PID lives in `.run/`); both directories are gitignored. It
+needs `docker compose` and `mvn` (or the per-module `./mvnw`) and uses the `.env` from
+step 2.
 
 ### Try it
 

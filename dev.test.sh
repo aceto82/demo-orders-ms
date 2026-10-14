@@ -11,7 +11,25 @@ TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 export DEV_RUN_DIR="$TMP_DIR/run"
 export DEV_LOG_DIR="$TMP_DIR/logs"
+export DEV_DISCOVERY_WAIT=0
 mkdir -p "$DEV_RUN_DIR" "$DEV_LOG_DIR"
+
+# Fake mvn/docker so the orchestration can be exercised without real infra.
+FAKE_BIN="$TMP_DIR/bin"
+FAKE_LOG="$TMP_DIR/calls.log"
+mkdir -p "$FAKE_BIN"
+cat >"$FAKE_BIN/docker" <<EOF
+#!/usr/bin/env bash
+echo "docker \$*" >>"$FAKE_LOG"
+exit 0
+EOF
+cat >"$FAKE_BIN/mvn" <<EOF
+#!/usr/bin/env bash
+echo "mvn \$*" >>"$FAKE_LOG"
+exit 0
+EOF
+chmod +x "$FAKE_BIN/docker" "$FAKE_BIN/mvn"
+export PATH="$FAKE_BIN:$PATH"
 
 PASS=0
 FAIL=0
@@ -35,6 +53,9 @@ expect_status() {
 }
 expect_contains() {
   if [[ "$OUTPUT" == *"$1"* ]]; then ok "output contains: $1"; else no "output contains: $1" "actual: $OUTPUT"; fi
+}
+expect_log_contains() {
+  if grep -qF "$1" "$FAKE_LOG"; then ok "calls include: $1"; else no "calls include: $1" "log: $(cat "$FAKE_LOG")"; fi
 }
 
 start "no arguments prints usage and exits 2"
@@ -74,6 +95,16 @@ start "logs with an unknown service exits 2"
 run logs nope-service
 expect_status 2
 expect_contains "Unknown service"
+
+start "up starts the docker stack and all services"
+: >"$FAKE_LOG"
+run up
+expect_status 0
+expect_log_contains "docker compose up -d"
+expect_log_contains "mvn -q -pl discovery-server spring-boot:run"
+expect_log_contains "mvn -q -pl api-gateway spring-boot:run"
+count="$(grep -c 'spring-boot:run' "$FAKE_LOG" || true)"
+if [[ "$count" -eq 6 ]]; then ok "started exactly 6 services"; else no "started exactly 6 services" "got $count"; fi
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [[ "$FAIL" -eq 0 ]]

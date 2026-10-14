@@ -20,12 +20,14 @@ BUSINESS_SERVICES=(orders-services inventory-service products-service notificati
 GATEWAY=api-gateway
 DISCOVERY=discovery-server
 DISCOVERY_PORT=8761
+DISCOVERY_WAIT="${DEV_DISCOVERY_WAIT:-60}"
 
 usage() {
   cat <<EOF
 Usage: ./dev.sh <command> [args]
 
 Commands:
+  up                                     Start the Docker stack and all services
   infra start|stop|restart|status        Manage the Docker Compose stack
   services start|stop|restart|status [s] Manage microservices (all if none given)
   logs <service>                         Follow a microservice log
@@ -171,7 +173,7 @@ kill_tree() {
 cmd_services_start() {
   if [[ $# -eq 0 ]]; then
     start_service "$DISCOVERY"
-    wait_for_port "$DISCOVERY_PORT" 60
+    wait_for_port "$DISCOVERY_PORT" "$DISCOVERY_WAIT"
     local s
     for s in "${BUSINESS_SERVICES[@]}"; do
       start_service "$s"
@@ -183,7 +185,7 @@ cmd_services_start() {
   local s
   for s in "$@"; do
     start_service "$s"
-    [[ "$s" == "$DISCOVERY" ]] && wait_for_port "$DISCOVERY_PORT" 60
+    [[ "$s" == "$DISCOVERY" ]] && wait_for_port "$DISCOVERY_PORT" "$DISCOVERY_WAIT"
   done
 }
 
@@ -284,6 +286,13 @@ cmd_status() {
   cmd_services_status
 }
 
+# --- shortcuts -------------------------------------------------------------
+
+cmd_up() {
+  cmd_infra start
+  cmd_services start
+}
+
 # --- dispatch --------------------------------------------------------------
 
 main() {
@@ -293,6 +302,7 @@ main() {
   case "$cmd" in
     "") usage >&2; exit 2 ;;
     help | -h | --help) usage ;;
+    up) cmd_up ;;
     infra) cmd_infra "$@" ;;
     services | svc) cmd_services "$@" ;;
     logs) cmd_logs "$@" ;;
