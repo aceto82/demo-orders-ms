@@ -70,3 +70,7 @@ resilience4j:
           seconds: 10
         automatic-transition-from-open-to-half-open-enabled: true
         permitted-number-of-calls-in-half-open-state: 3
+
+app:
+  security:
+    issuer-uri: http://localhost:8181/realms/demo-orders-serv-realm
