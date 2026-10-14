@@ -3,6 +3,7 @@ package com.ortiz.products_service.controllers;
 import com.ortiz.products_service.model.dtos.ProductRequest;
 import com.ortiz.products_service.model.dtos.ProductResponse;
 import com.ortiz.products_service.services.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,7 +21,7 @@ public class ProductController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
-    public void addProduct(@RequestBody ProductRequest productRequest){
+    public void addProduct(@Valid @RequestBody ProductRequest productRequest){
         this.productService.addProduct(productRequest);
     }
 
