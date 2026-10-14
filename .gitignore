@@ -36,3 +36,7 @@ build/
 ### Grafana runtime data ###
 files/grafana/*
 !files/grafana/.gitkeep
+
+### Local dev runtime data (dev.sh) ###
+.run/
+logs/
