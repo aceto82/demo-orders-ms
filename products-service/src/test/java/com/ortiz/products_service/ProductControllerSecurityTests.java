@@ -47,6 +47,14 @@ class ProductControllerSecurityTests {
 
     @Test
     @WithMockUser(roles = "USER")
+    void userWithInvalidBodyCannotAddProduct() throws Exception {
+        mockMvc.perform(post("/api/product").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"sku\":\"\",\"name\":\"n\",\"price\":1.0}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
     void userCanListProducts() throws Exception {
         mockMvc.perform(get("/api/product")).andExpect(status().isOk());
     }

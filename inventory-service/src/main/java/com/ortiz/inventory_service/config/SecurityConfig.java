@@ -3,6 +3,7 @@ package com.ortiz.inventory_service.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -31,6 +32,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests.requestMatchers( request ->
                                 request.getRequestURI().contains("/actuator/inventory")).permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/inventory/**").hasRole("USER")
                                 .anyRequest().authenticated())
                 .oauth2ResourceServer(configurer ->
                         configurer.jwt(

@@ -39,6 +39,14 @@ class InventoryControllerSecurityTests {
     }
 
     @Test
+    @WithMockUser(roles = "GUEST")
+    void nonUserWithInvalidBodyCannotReserve() throws Exception {
+        mockMvc.perform(post("/api/inventory/reserve")
+                        .contentType(APPLICATION_JSON).content("[{}]"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @WithMockUser(roles = "USER")
     void userCanCheckStock() throws Exception {
         mockMvc.perform(get("/api/inventory/000001")).andExpect(status().isOk());
