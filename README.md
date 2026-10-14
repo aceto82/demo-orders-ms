@@ -100,6 +100,7 @@ El recorrido de una orden:
 - **Docker** y **Docker Compose** (para las bases de datos, Keycloak, Kafka, etc.).
 - **JDK 21**.
 - **Maven 3.9+**, o bien el *wrapper* (`./mvnw`) que ya trae cada módulo.
+- **curl** (lo usa `./dev.sh` para consultar el *health* de cada servicio).
 
 ### Ejecutarlo localmente
 
@@ -194,6 +195,8 @@ repositorio:
 ./dev.sh up                              # atajo: infra + todos los servicios
 ./dev.sh infra start                     # solo Docker Compose
 ./dev.sh infra stop
+./dev.sh infra restart                   # down + up (conserva los datos)
+./dev.sh infra reset                     # down -v + up (BORRA los datos)
 ./dev.sh services start                  # todos (discovery primero, gateway último)
 ./dev.sh services start orders-services  # uno solo
 ./dev.sh services stop api-gateway
@@ -207,7 +210,34 @@ repositorio:
 
 Cada servicio arranca **en segundo plano** y escribe su salida en `logs/<servicio>.log`
 (su PID queda en `.run/`); ambos directorios están en `.gitignore`. Necesita
-`docker compose` y `mvn` (o los `./mvnw` de cada módulo) y usa el `.env` del paso 2.
+`docker compose`, `mvn` (o los `./mvnw` de cada módulo) y `curl` (para consultar el
+*health* de cada servicio).
+
+**Credenciales:** `dev.sh` lee el `.env` del paso 2 y lo exporta tanto a los contenedores
+como a los servicios, **con prioridad sobre cualquier variable que tengas exportada en la
+shell**. Si falta el archivo o alguna variable requerida, el comando se detiene antes de
+arrancar nada y te dice cuál falta. `help`, `status`, `logs` y `test` siguen funcionando
+sin un `.env` completo.
+
+**Arranque:** `up` y `services start` esperan a que las bases de datos, Keycloak y Kafka
+reporten *healthy* antes de arrancar cada servicio, y después verifican el *health* de cada
+uno. Si un servicio no queda *healthy* en el tiempo previsto, el comando sale con un código
+distinto de cero e indica el servicio que falló junto con la ruta de su log.
+
+**Ciclo de vida de la infraestructura:**
+
+```bash
+./dev.sh infra restart   # `down` + `up`: conserva los datos (bases y realm de Keycloak)
+./dev.sh infra reset     # `down -v` + `up`: BORRA los datos y recrea las bases vacías
+```
+
+`infra reset` es la **única** operación destructiva: elimina los volúmenes con nombre
+(`docker compose down -v`), así que después hay que repetir la configuración de Keycloak
+del paso 4.
+
+> ⚠️ Al pasar a volúmenes con nombre, el primer arranque después de este cambio crea bases
+> vacías (los datos anteriores vivían en volúmenes anónimos que ya se descartaban en cada
+> reinicio). Si ya tenías el realm de Keycloak, volvé a crearlo una vez.
 
 ### Probarlo
 
@@ -378,6 +408,7 @@ The life of an order:
 - **Docker** and **Docker Compose** (for the databases, Keycloak, Kafka, etc.).
 - **JDK 21**.
 - **Maven 3.9+**, or the wrapper (`./mvnw`) bundled with each module.
+- **curl** (used by `./dev.sh` to poll each service's health endpoint).
 
 ### Run it locally
 
@@ -471,6 +502,8 @@ Every step above can be driven by the `dev.sh` script at the repository root:
 ./dev.sh up                              # shortcut: infra + all services
 ./dev.sh infra start                     # Docker Compose only
 ./dev.sh infra stop
+./dev.sh infra restart                   # down + up (keeps stored data)
+./dev.sh infra reset                     # down -v + up (DISCARDS stored data)
 ./dev.sh services start                  # all (discovery first, gateway last)
 ./dev.sh services start orders-services  # just one
 ./dev.sh services stop api-gateway
@@ -484,8 +517,32 @@ Every step above can be driven by the `dev.sh` script at the repository root:
 
 Each service runs **in the background** and writes its output to
 `logs/<service>.log` (its PID lives in `.run/`); both directories are gitignored. It
-needs `docker compose` and `mvn` (or the per-module `./mvnw`) and uses the `.env` from
-step 2.
+needs `docker compose`, `mvn` (or the per-module `./mvnw`) and `curl` (to poll service
+health). 
+
+**Credentials:** `dev.sh` reads `.env` (from step 2) and exports it to both containers
+and services, **taking precedence over any variable exported in your shell**. If the file
+or any required variable is missing, the command stops before starting anything and tells
+you what is missing. `help`, `status`, `logs` and `test` remain usable without a complete
+`.env`.
+
+`up` and `services start` wait for the databases, Keycloak and Kafka to report
+*healthy* before starting services, and verify each service's health afterwards. A failing
+service causes the command to exit with a non-zero code and report its log path.
+
+**Infrastructure lifecycle:**
+
+```bash
+./dev.sh infra restart   # down + up: keeps stored data (databases and Keycloak realm)
+./dev.sh infra reset     # down -v + up: DISCARDS stored data and recreates empty databases
+```
+
+`infra reset` is the **only** destructive operation (it runs `docker compose down -v`), so
+repeat Keycloak setup (step 4) afterwards.
+
+> ⚠️ The first run after this change will start with empty databases (previous data lived
+> in anonymous volumes which were already discarded by each restart). If you had a Keycloak
+> realm configured, create it again once.
 
 ### Try it
 
