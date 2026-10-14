@@ -14,3 +14,7 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: http://localhost:8181/realms/demo-orders-serv-realm/protocol/openid-connect/certs
+
+app:
+  security:
+    issuer-uri: http://localhost:8181/realms/demo-orders-serv-realm

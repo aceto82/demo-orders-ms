@@ -3,6 +3,7 @@ package com.ortiz.products_service.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -31,6 +32,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests.requestMatchers( request ->
                                         request.getRequestURI().contains("/actuator/products")).permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/product/**").hasRole("ADMIN")
                                 .anyRequest().authenticated())
                 .oauth2ResourceServer(configurer ->
                         configurer.jwt(
@@ -51,15 +53,13 @@ public class SecurityConfig {
 class KeyCloakRealmRoleConverter implements Converter<Jwt, Collection<GrantedAuthority>> {
     @Override
     public Collection<GrantedAuthority> convert(Jwt source) {
-        if (source.getClaims().isEmpty()) {
-            return List.of();
-        }
-        final Map<String, List<String>> realmAccess = (Map<String, List<String>>) source.getClaims().get("realm_access");
-        if (realmAccess == null) {
-            return List.of();
-        }
-        return realmAccess.get("roles").stream()
-                .map(roleName -> "ROLE_" + roleName)
+        Object raw = source.getClaims().get("realm_access");
+        if (!(raw instanceof Map<?, ?> realmAccess)) return List.of();
+        Object roles = realmAccess.get("roles");
+        if (!(roles instanceof Collection<?> roleNames)) return List.of();
+        return roleNames.stream()
+                .filter(String.class::isInstance).map(String.class::cast)
+                .map(role -> "ROLE_" + role)
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
     }

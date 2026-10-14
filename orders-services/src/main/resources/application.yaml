@@ -6,8 +6,8 @@ spring:
       ddl-auto: update
   datasource:
     url: jdbc:mysql://localhost:3306/ms_orders
-    username: aceto82
-    password: 12345678
+    username: ${DB_USERNAME:aceto82}
+    password: ${DB_PASSWORD}
   kafka:
     bootstrap-servers: localhost:9092
     producer:
@@ -26,13 +26,13 @@ server:
 eureka:
   client:
     service-url:
-      default-zone: http://eureka:password@localhost:8761/eureka
+      default-zone: http://${EUREKA_USERNAME:eureka}:${EUREKA_PASSWORD:password}@localhost:8761/eureka
   instance:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
 
 logging:
   level:
-    root: debug
+    root: info
   pattern:
     correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "
   include-application-name: false
@@ -43,13 +43,12 @@ management:
       exposure:
         include:
           - health
-          - circuitbreakers
-          - circuitbreakerevents
           - prometheus
       base-path: /actuator/orders
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
+      roles: ADMIN
   health:
     circuitbreakers:
       enabled: true
@@ -71,3 +70,7 @@ resilience4j:
           seconds: 10
         automatic-transition-from-open-to-half-open-enabled: true
         permitted-number-of-calls-in-half-open-state: 3
+
+app:
+  security:
+    issuer-uri: http://localhost:8181/realms/demo-orders-serv-realm

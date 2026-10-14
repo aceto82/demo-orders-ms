@@ -6,8 +6,8 @@ spring:
       ddl-auto: update
   datasource:
     url: jdbc:postgresql://localhost:5431/ms_inventory
-    username: aceto82
-    password: 12345678
+    username: ${DB_USERNAME:aceto82}
+    password: ${DB_PASSWORD}
   security:
     oauth2:
       resourceserver:
@@ -18,12 +18,12 @@ server:
 eureka:
   client:
     service-url:
-      default-zone: http://eureka:password@localhost:8761/eureka
+      default-zone: http://${EUREKA_USERNAME:eureka}:${EUREKA_PASSWORD:password}@localhost:8761/eureka
   instance:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
 logging:
   level:
-    root: debug
+    root: info
   pattern:
     correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "
   include-application-name: false
@@ -42,3 +42,7 @@ management:
     export:
       zipkin:
         endpoint: http://localhost:9411/api/v2/spans
+
+app:
+  security:
+    issuer-uri: http://localhost:8181/realms/demo-orders-serv-realm
