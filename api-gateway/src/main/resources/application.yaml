@@ -85,8 +85,7 @@ eureka:
 
 logging:
   level:
-    root: debug
-    org.springframework.cloud.gateway: trace
+    root: info
   pattern:
     correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "
   include-application-name: false

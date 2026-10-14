@@ -23,7 +23,7 @@ eureka:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
 logging:
   level:
-    root: debug
+    root: info
   pattern:
     correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "
   include-application-name: false

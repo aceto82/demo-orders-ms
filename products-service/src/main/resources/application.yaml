@@ -24,7 +24,7 @@ eureka:
 
 logging:
   level:
-    root: debug
+    root: info
   pattern:
     correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "
   include-application-name: false
