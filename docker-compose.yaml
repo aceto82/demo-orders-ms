@@ -12,8 +12,18 @@ services:
       - "5431:5431"
     expose:
       - 5431
+    volumes:
+      - inventory-db-data:/var/lib/postgresql
     command:
       - -p 5431
+    healthcheck:
+      # The image's pg_hba.conf trusts 127.0.0.1, so connect through the container
+      # address to make the probe actually exercise the credentials.
+      test: ["CMD-SHELL", "PGPASSWORD=\"$$POSTGRES_PASSWORD\" psql -h \"$$(hostname -i)\" -p 5431 -U \"$$POSTGRES_USER\" -d ms_inventory -c 'select 1' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
 
   ### MySQL DB orders
   db-orders:
@@ -29,6 +39,16 @@ services:
       - "3306:3306"
     expose:
       - 3306
+    volumes:
+      - orders-db-data:/var/lib/mysql
+    healthcheck:
+      # `mysqladmin ping` exits 0 even on "Access denied" (it only probes the
+      # server), so `status` is used: it authenticates and fails on a wrong password.
+      test: ["CMD-SHELL", "mysqladmin -h 127.0.0.1 -u root --password=\"$$MYSQL_ROOT_PASSWORD\" status >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
 
   ### PostgreSQL DB products
   db-products:
@@ -43,8 +63,18 @@ services:
       - "5432:5432"
     expose:
       - 5432
+    volumes:
+      - products-db-data:/var/lib/postgresql
     command:
       - -p 5432
+    healthcheck:
+      # The image's pg_hba.conf trusts 127.0.0.1, so connect through the container
+      # address to make the probe actually exercise the credentials.
+      test: ["CMD-SHELL", "PGPASSWORD=\"$$POSTGRES_PASSWORD\" psql -h \"$$(hostname -i)\" -p 5432 -U \"$$POSTGRES_USER\" -d ms_products -c 'select 1' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
 
   ### PostgreSQL DB Keycloak
   db-keycloak:
@@ -59,8 +89,16 @@ services:
       - "5433:5433"
     expose:
       - 5433
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql
     command:
       - -p 5433
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5433 -U \"$$POSTGRES_USER\" -d db_keycloak"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
 
   ### Keycloak
   keycloak:
@@ -84,6 +122,16 @@ services:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_HTTP_PORT: 8181
+      KC_HEALTH_ENABLED: "true"
+    healthcheck:
+      # The image has no HTTP client (no curl/wget), so probe /health/ready on the
+      # management port (9000) over bash's /dev/tcp. HTTP/1.0 closes the connection
+      # after the response, so grep sees EOF.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.0\r\n\r\n' >&3 && grep -q '200 OK' <&3"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
 
   ### Zookeeper
   zookeeper:
@@ -110,6 +158,12 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
 
   ### Zipkin
   zipkin:
@@ -140,3 +194,9 @@ services:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
     depends_on:
       - prometheus
+
+volumes:
+  orders-db-data:
+  inventory-db-data:
+  products-db-data:
+  keycloak-db-data:
