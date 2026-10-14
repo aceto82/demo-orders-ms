@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class OrderController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('USER')")
     @CircuitBreaker(name = "orders-service", fallbackMethod = "placeOrderFallback")
     public ResponseEntity<OrderResponse> placeOrder(@Valid @RequestBody OrderRequest orderRequest) {
         var orders = this.orderService.placeOrder(orderRequest);
@@ -28,6 +30,7 @@ public class OrderController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('USER')")
     public List<OrderResponse> getOrders(){
         return this.orderService.getOrders();
     }
