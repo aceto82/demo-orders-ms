@@ -138,9 +138,13 @@ compose JSON (rejected with D3).
   (`/var/lib/mysql`, `/var/lib/postgresql`). Named volumes survive `down`/`up` and are
   removed only by `down -v`, which makes "restart preserves, reset discards" a property
   of the stack rather than a promise in a script.
-- Healthchecks: `db-orders` uses `mysqladmin ping` with the root credentials; the
-  PostgreSQL services use `psql -c 'select 1'` against the application database, which
-  verifies credentials as well as availability (a mismatch between `.env` and an existing
+- Healthchecks: `db-orders` uses `mysqladmin status` with the root credentials. `ping` is
+  not used because it exits `0` even when the server answers `Access denied`, so it cannot
+  catch a `.env`/volume mismatch; `status` authenticates. The PostgreSQL services use
+  `psql -c 'select 1'` against the application database, connected through the container
+  address rather than `127.0.0.1`, because the image's `pg_hba.conf` `trust`s loopback and
+  a loopback probe would therefore ignore the password. Together these verify credentials
+  as well as availability (a mismatch between `.env` and an existing
   volume therefore surfaces as `unhealthy` instead of a Spring stack trace);
   `db-keycloak` uses `pg_isready`; `keycloak` enables `KC_HEALTH_ENABLED` and probes
   `/health/ready` on its management port with a shell TCP check (the image is a
