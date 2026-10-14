@@ -15,7 +15,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/discovery/health").permitAll()
+                        .requestMatchers("/actuator/discovery/health", "/actuator/discovery/prometheus").permitAll()
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults());
         return http.build();

@@ -28,4 +28,8 @@ class DiscoveryServerSecurityTests {
         ResponseEntity<String> response = restTemplate.getForEntity("/actuator/discovery/health", String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
+    @Test void prometheusIsPublic() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/actuator/discovery/prometheus", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
 }
