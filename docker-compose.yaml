@@ -6,8 +6,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: ms_inventory
-      POSTGRES_USER: aceto82
-      POSTGRES_PASSWORD: 12345678
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5431:5431"
     expose:
@@ -22,9 +22,9 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: ms_orders
-      MYSQL_USER: aceto82
-      MYSQL_PASSWORD: 12345678
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
       - "3306:3306"
     expose:
@@ -37,8 +37,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: ms_products
-      POSTGRES_USER: aceto82
-      POSTGRES_PASSWORD: 12345678
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     expose:
@@ -53,8 +53,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: db_keycloak
-      POSTGRES_USER: aceto82
-      POSTGRES_PASSWORD: 12345678
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5433:5433"
     expose:
@@ -79,10 +79,10 @@ services:
       DB_ADDR: db-keycloak
       DB_DATABASE: db_keycloak
       DB_PORT: 5433
-      DB_USER: aceto82
-      DB_PASSWORD: 12345678
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      DB_USER: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_HTTP_PORT: 8181
 
   ### Zookeeper
@@ -136,7 +136,7 @@ services:
     volumes:
       - ./files/grafana:/var/lib/grafana
     environment:
-      GF_SECURITY_ADMIN_PASSWORD: admin
-      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
     depends_on:
       - prometheus

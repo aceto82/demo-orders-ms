@@ -3,8 +3,8 @@ spring:
     name: discovery-server
   security:
     user:
-      name: eureka
-      password: password
+      name: ${EUREKA_USERNAME:eureka}
+      password: ${EUREKA_PASSWORD:password}
 server:
   port: 8761
 eureka:

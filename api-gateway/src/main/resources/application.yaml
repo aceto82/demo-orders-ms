@@ -68,7 +68,7 @@ spring:
             scope:
               - openid
             client-id: demo_orders_serv_client
-            client-secret: KjsSWknhdPF10Aol6SgxNcVuxJI6uLY3bqQfgKZyS9XGfQcjwl2izpbVI9RwcnvqVKvFCoyCSYe5PO9S3NyC3b
+            client-secret: ${KEYCLOAK_CLIENT_SECRET}
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/keycloak"
 
@@ -79,7 +79,7 @@ server:
 eureka:
   client:
     service-url:
-      default-zone: http://eureka:password@localhost:8761/eureka
+      default-zone: http://${EUREKA_USERNAME:eureka}:${EUREKA_PASSWORD:password}@localhost:8761/eureka
   instance:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
 
